@@ -113,9 +113,6 @@ class PosixRun(ResourceHandler):
         if run:
             # TODO: add retry, user, group, umask, log,...
             ret = self._execute(resource.command, resource.timeout)
-
-            print(ret)
-            
             return True
 
         return False
