@@ -86,7 +86,7 @@ class PosixRun(ResourceHandler):
             # TODO: Log a warning is the command does not exist
             value = self._execute(resource.onlyif, resource.timeout)
 
-            if value[0] != 0:
+            if value[0] > 0:
                 state["onlyif"] = False
 
         return state
@@ -112,6 +112,7 @@ class PosixRun(ResourceHandler):
 
         if run:
             # TODO: add retry, user, group, umask, log,...
+            LOGGER.info("Executing command")
             ret = self._execute(resource.command, resource.timeout)
             return True
 
