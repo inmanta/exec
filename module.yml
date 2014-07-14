@@ -1,6 +1,6 @@
-name: exec
-version: 0.1.1
-source: git@github.com:bartv/imp-exec
+name: imp
+version: 0.1.2
+source: git@github.com:bartv/imp-imp
 license: Apache 2.0
 author: Bart Vanbrabant <bart.vanbrabant@cs.kuleuven.be>
 requires:
