@@ -49,10 +49,10 @@ class PosixRun(ResourceHandler):
     def _execute(self, command, timeout):
         args = shlex.split(command)
 
-        if self._io.file_exists(args[0]):
+        if not self._io.file_exists(args[0]):
             return ("", "", -1)
 
-        return self._io.run(args[0], arg[1:])
+        return self._io.run(args[0], args[1:])
 
     def check_resource(self, resource):
         # a True for a condition means that the command may be executed.
@@ -80,11 +80,16 @@ class PosixRun(ResourceHandler):
             if value[2] > 0:
                 state["onlyif"] = False
 
-        print(resource.id, state)
-        return state
+        run = True
+        for k,v in state.items():
+            run &= v
+
+        return run
             
     def list_changes(self, desired):
-        self.check_resource(desired)
+        if self.check_resource(desired):
+            return {"execute": (False, True)}
+        
         return {}
 
     def can_reload(self):
@@ -92,7 +97,7 @@ class PosixRun(ResourceHandler):
             Can this handler reload?
         """
         return True
-
+    
     def do_cmd(self, resource, cmd):
         """
             Execute the command (or reload command) if required
@@ -111,7 +116,6 @@ class PosixRun(ResourceHandler):
 
         return False
 
-
     def do_reload(self, resource):
         """
             Reload this resource
@@ -127,4 +131,3 @@ class PosixRun(ResourceHandler):
             return False
 
         return self.do_cmd(resource, resource.command)
-
