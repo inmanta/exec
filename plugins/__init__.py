@@ -49,19 +49,10 @@ class PosixRun(ResourceHandler):
     def _execute(self, command, timeout):
         args = shlex.split(command)
 
-        if not os.path.exists(args[0]):
-            return (-1, "", "", False)
+        if self._io.file_exists(args[0]):
+            return ("", "", -1)
 
-        proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-
-        try:
-            outs, errs = proc.communicate(timeout=timeout)
-
-            return (proc.returncode, outs, errs, False)
-        except TimeoutExpired:
-            proc.kill()
-            outs, errs = proc.communicate()
-            return (proc.returncode, outs, errs, True)
+        return self._io.run(args[0], arg[1:])
 
     def check_resource(self, resource):
         # a True for a condition means that the command may be executed.
@@ -69,7 +60,7 @@ class PosixRun(ResourceHandler):
 
         if resource.creates is not None and resource.creates != "":
             # check if the file exists
-            state["creates"] = not os.path.exists(resource.creates)
+            state["creates"] = not self._io.file_exists(resource.creates)
 
         if resource.unless is not None and resource.unless != "":
             # only execute this Run if this command fails
@@ -77,7 +68,7 @@ class PosixRun(ResourceHandler):
             # TODO: Log a warning is the command does not exist
             value = self._execute(resource.unless, resource.timeout)
 
-            if value[0] == 0:
+            if value[2] == 0:
                 state["unless"] = False
 
         if resource.onlyif is not None and resource.onlyif != "":
@@ -86,12 +77,14 @@ class PosixRun(ResourceHandler):
             # TODO: Log a warning is the command does not exist
             value = self._execute(resource.onlyif, resource.timeout)
 
-            if value[0] > 0:
+            if value[2] > 0:
                 state["onlyif"] = False
 
+        print(resource.id, state)
         return state
             
     def list_changes(self, desired):
+        self.check_resource(desired)
         return {}
 
     def can_reload(self):
