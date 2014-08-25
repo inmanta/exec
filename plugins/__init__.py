@@ -102,11 +102,7 @@ class PosixRun(ResourceHandler):
         """
             Execute the command (or reload command) if required
         """
-        state = self.check_resource(resource)
-
-        run = True
-        for k,v in state.items():
-            run &= v
+        run = self.check_resource(resource)
 
         if run:
             # TODO: add retry, user, group, umask, log,...
