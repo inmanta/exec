@@ -42,9 +42,8 @@ class PosixRun(ResourceHandler):
         method will determine based on the "reload_only", "creates", "unless" 
         and "onlyif" attributes if the command will be executed.
     """
-    @classmethod
-    def is_available(self, io):
-        return io.file_exists("/bin/true")
+    def available(self, resource):
+        return self._io.file_exists("/bin/true")
 
     def _execute(self, command, timeout):
         args = shlex.split(command)
