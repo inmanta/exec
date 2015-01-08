@@ -47,10 +47,6 @@ class PosixRun(ResourceHandler):
 
     def _execute(self, command, timeout):
         args = shlex.split(command)
-
-        if not self._io.file_exists(args[0]):
-            return ("", "", -1)
-
         return self._io.run(args[0], args[1:])
 
     def check_resource(self, resource):
@@ -107,6 +103,8 @@ class PosixRun(ResourceHandler):
             # TODO: add retry, user, group, umask, log,...
             LOGGER.info("Executing command")
             ret = self._execute(resource.command, resource.timeout)
+            if ret[2] > 0:
+                raise Exception("Failed to execute command: %s" % ret[1])
             return True
 
         return False
