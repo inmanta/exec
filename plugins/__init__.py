@@ -16,9 +16,9 @@
     Contect: bart@impera.io
 """
 
-from Imp.resources import Resource, resource, ResourceNotFoundExcpetion
-from Imp.agent.handler import provider, ResourceHandler
-from Imp.export import resource_to_id
+from impera.resources import Resource, resource, ResourceNotFoundExcpetion
+from impera.agent.handler import provider, ResourceHandler
+from impera.export import resource_to_id
 
 import logging, os, shlex, subprocess
 
@@ -36,9 +36,9 @@ class Run(Resource):
 @provider("exec::Run", name = "posix")
 class PosixRun(ResourceHandler):
     """
-        A handler to execute commands on posix compatible systems. This is 
+        A handler to execute commands on posix compatible systems. This is
         a very atypical resource as this executes a command. The check_resource
-        method will determine based on the "reload_only", "creates", "unless" 
+        method will determine based on the "reload_only", "creates", "unless"
         and "onlyif" attributes if the command will be executed.
     """
     def available(self, resource):
@@ -79,11 +79,11 @@ class PosixRun(ResourceHandler):
             run &= v
 
         return run
-            
+
     def list_changes(self, desired):
         if self.check_resource(desired):
             return {"execute": (False, True)}
-        
+
         return {}
 
     def can_reload(self):
@@ -91,7 +91,7 @@ class PosixRun(ResourceHandler):
             Can this handler reload?
         """
         return True
-    
+
     def do_cmd(self, resource, cmd):
         """
             Execute the command (or reload command) if required

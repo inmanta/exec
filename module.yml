@@ -3,4 +3,4 @@ license: Apache 2.0
 name: exec
 requires: {std: 'git@github.com:bartv/imp-std, ">= 0.1"'}
 source: git@github.com:bartv/imp-exec
-version: 0.2.3
+version: 0.2.4
