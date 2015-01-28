@@ -35,7 +35,7 @@ entity Run:
         :param timeout The maximum time the command should take. If the command takes longer, the deploy agent will try to end it
         :param retries The number of times to retry to execute the command if it fails. By default the command will not be retried
         :param try_sleep Time to wait between retries
-        :param unless If this attribute is set, the command will only execute if the command in this attribute is not succesfull (returns 0). If the command passed to this attribute does not exist, this is interpreted as a non-succesfull execution.
+        :param unless If this attribute is set, the command will only execute if the command in this attribute is not succesfull (returns not 0). If the command passed to this attribute does not exist, this is interpreted as a non-succesfull execution.
     """
     string command
     string creates = ""
