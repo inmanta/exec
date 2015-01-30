@@ -101,7 +101,10 @@ class PosixRun(ResourceHandler):
         if run:
             # TODO: add retry, user, group, umask, log,...
             LOGGER.info("Executing command")
-            ret = self._execute(resource.command, resource.timeout, cwd=resource.cwd)
+            cwd = None
+            if resource.cwd == '':
+                cwd = resource.cwd
+            ret = self._execute(resource.command, resource.timeout, cwd=cwd)
             if ret[2] > 0:
                 raise Exception("Failed to execute command: %s" % ret[1])
             return True

@@ -2,6 +2,6 @@ author: Bart Vanbrabant <bart@impera.io>
 license: Apache 2.0
 name: exec
 source: git@github.com:impera-io/exec
-version: 0.2.7
+version: 0.2.8
 requires:
     std: git@github.com:impera-io/std, ">= 0.1"
