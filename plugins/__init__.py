@@ -102,7 +102,7 @@ class PosixRun(ResourceHandler):
             # TODO: add retry, user, group, umask, log,...
             LOGGER.info("Executing command")
             cwd = None
-            if resource.cwd == '':
+            if resource.cwd != '':
                 cwd = resource.cwd
             ret = self._execute(resource.command, resource.timeout, cwd=cwd)
             if ret[2] > 0:
