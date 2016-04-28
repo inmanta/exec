@@ -18,7 +18,6 @@
 
 from impera.resources import Resource, resource, ResourceNotFoundExcpetion
 from impera.agent.handler import provider, ResourceHandler
-from impera.export import resource_to_id
 
 import logging, os, shlex, subprocess
 
