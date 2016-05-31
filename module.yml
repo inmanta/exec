@@ -1,7 +1,6 @@
-author: Bart Vanbrabant <bart@impera.io>
+author: Inmanta <code@inmanta.com>
 license: Apache 2.0
 name: exec
-source: git@git.impera.io:modules/exec
-version: 0.2.10
+version: '0.3'
 requires:
-    std: git@git.impera.io:modules/std, ">= 0.1"
+- std
