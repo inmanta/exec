@@ -1,5 +1,5 @@
 """
-    Copyright 2016 Inmanta
+    Copyright 2017 Inmanta
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,49 +20,35 @@ entity Run:
     """
         Run a command with almost exact semantics as the exec type of puppet
 
-        :param command: The actual command to execute. The command should be almost always be idempotent.
-        :param creates: A file that the command creates, when the file already exists the command
-                        will not be executed. This helps to make simple commands idempotent
-        :param cwd: The directory from which to run the command. WARNING: Command is spawned in a
-                   subshell. This implies that the real path of cwd is used and not a possible
-                   symlinked path.
-        :param environment: Environment variables to set before the command is executed.
-                            An array of variables can be passed as strings in the form var=value
-        :param user: The user to execute the command as
-        :param group: The group to execute the command as
-        :param umask: The umask to set during execution
-        :param onlyif: Only execute the command if this command is true (returns 0)
-        :param path: The pat to search the command in
-        :param reload: The command to execute when this run needs to reload. If empty the command
-                       itself will be executed again.
-        :param reload_only: Only use this command to reload
-        :param returns: A list of valid return codes, by default this is only 0
-        :param timeout: The maximum time the command should take. If the command takes longer, the
-                        deploy agent will try to end it
-        :param retries: The number of times to retry to execute the command if it fails. By default
-                        the command will not be retried
-        :param try_sleep: Time to wait between retries
-        :param unless: If this attribute is set, the command will only execute if the command in
-                       this attribute is not succesfull (returns not 0). If the command passed to
-                       this attribute does not exist, this is interpreted as a non-succesfull
-                       execution.
+        :param command The actual command to execute. The command should be almost always be idempotent.
+        :param creates A file that the command creates, when the file already exists the command will not be executed. This
+                       helps to make simple commands idempotent
+        :param cwd The directory from which to run the command. WARNING: Command is spawned in a subshell. This implies that
+                   the real path of cwd is used and not a possible symlinked path.
+        :param environment Environment variables to set before the command is executed. An array of variables can be passed as
+                           strings in the form var=value
+        :param onlyif Only execute the command if this command is true (returns 0)
+        :param path The path to search the command in
+        :param reload The command to execute when this run needs to reload. If empty the command itself will be executed again.
+        :param reload_only Only use this command to reload
+        :param returns A list of valid return codes, by default this is only 0
+        :param timeout The maximum time the command should take. If the command takes longer, the deploy agent will try to end
+                       it.
+        :param unless If this attribute is set, the command will only execute if the command in this attribute is not successful
+                      (returns not 0). If the command passed to this attribute does not exist, this is interpreted as a
+                      non-successful execution.
     """
     string command
-    string creates = ""
-    string cwd = ""
-    string environment = ""
-    string user = ""
-    string group = ""
-    string umask = ""
-    string onlyif = ""
-    string path = ""
-    string reload = ""
+    string creates=""
+    string cwd=""
+    string environment=""
+    string onlyif=""
+    string path=""
+    string reload=""
     bool reload_only = false
-    string returns = ""
-    number timeout = 300
-    number retries = 0
-    number try_sleep = 10
-    string unless = ""
+    number[] returns=[0]
+    number timeout=300
+    string unless=""
 end
 
 implement Run using std::none
@@ -71,4 +57,3 @@ std::Host host [1] -- [0:] Run exec_run_commands
 
 # Force the command, combined with the host to make a Run unique
 index Run(host, command)
-

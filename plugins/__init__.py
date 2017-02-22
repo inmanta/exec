@@ -1,5 +1,5 @@
 """
-    Copyright 2016 Inmanta
+    Copyright 2017 Inmanta
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,24 +16,23 @@
     Contact: code@inmanta.com
 """
 
-from inmanta.resources import Resource, resource, ResourceNotFoundExcpetion
-from inmanta.agent.handler import provider, ResourceHandler
+from inmanta.resources import Resource, resource
+from inmanta.agent import handler
 
-import logging, os, shlex, subprocess
+import shlex
 
-LOGGER = logging.getLogger(__name__)
 
-@resource("exec::Run", agent = "host.name", id_attribute = "command")
+@resource("exec::Run", agent="host.name", id_attribute="command")
 class Run(Resource):
     """
         This class represents a service on a system.
     """
-    fields = ("command", "creates", "cwd", "environment", "user", "group",
-        "umask", "onlyif", "path", "reload", "reload_only", "returns", "timeout",
-        "retries", "try_sleep", "unless")
+    fields = ("command", "creates", "cwd", "environment", "onlyif", "path", "reload", "reload_only", "returns", "timeout",
+              "unless")
 
-@provider("exec::Run", name = "posix")
-class PosixRun(ResourceHandler):
+
+@handler.provider("exec::Run", name="posix")
+class PosixRun(handler.ResourceHandler):
     """
         A handler to execute commands on posix compatible systems. This is
         a very atypical resource as this executes a command. The check_resource
@@ -45,44 +44,36 @@ class PosixRun(ResourceHandler):
 
     def _execute(self, command, timeout, cwd=None):
         args = shlex.split(command)
-        return self._io.run(args[0], args[1:], None, cwd)
+        return self._io.run(args[0], args[1:], None, cwd, timeout=timeout)
 
-    def check_resource(self, resource):
+    def check_resource(self, ctx, resource):
+        return resource
+
+    def list_changes(self, ctx, resource):
         # a True for a condition means that the command may be executed.
-        state = {"creates": True, "unless" : True, "onlyif" : True}
+        execute = True
 
         if resource.creates is not None and resource.creates != "":
             # check if the file exists
-            state["creates"] = not self._io.file_exists(resource.creates)
+            execute &= not self._io.file_exists(resource.creates)
 
         if resource.unless is not None and resource.unless != "":
             # only execute this Run if this command fails
-
-            # TODO: Log a warning is the command does not exist
             value = self._execute(resource.unless, resource.timeout)
+            ctx.info("Unless cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
+                     cmd=resource.unless, stdout=value[0], stderr=value[1], retcode=value[2])
 
-            if value[2] == 0:
-                state["unless"] = False
+            execute &= value[2] != 0
 
         if resource.onlyif is not None and resource.onlyif != "":
             # only execute this Run if this command is succesfull
-
-            # TODO: Log a warning is the command does not exist
             value = self._execute(resource.onlyif, resource.timeout)
+            ctx.info("Onlyif cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
+                     cmd=resource.onlyif, stdout=value[0], stderr=value[1], retcode=value[2])
 
-            if value[2] > 0:
-                state["onlyif"] = False
+            execute &= value[2] == 0
 
-        run = True
-        for k,v in state.items():
-            run &= v
-
-        return run
-
-    def list_changes(self, desired):
-        if self.check_resource(desired):
-            return {"execute": (False, True)}
-
+        ctx.set("execute", execute)
         return {}
 
     def can_reload(self):
@@ -91,37 +82,38 @@ class PosixRun(ResourceHandler):
         """
         return True
 
-    def do_cmd(self, resource, cmd):
+    def do_cmd(self, ctx, resource, cmd):
         """
             Execute the command (or reload command) if required
         """
-        run = self.check_resource(resource)
-
-        if run:
-            # TODO: add retry, user, group, umask, log,...
-            LOGGER.info("Executing command")
+        if ctx.get("execute"):
+            ctx.set_updated()
             cwd = None
             if resource.cwd != '':
                 cwd = resource.cwd
-            ret = self._execute(resource.command, resource.timeout, cwd=cwd)
-            if ret[2] > 0:
+            ctx.debug("Execute %(cmd)s with timeout %(timeout)s and working dir %(cwd)s",
+                      cmd=cmd, timeout=resource.timeout, cwd=cwd)
+            ret = self._execute(cmd, resource.timeout, cwd=cwd)
+            if ret[2] not in resource.returns:
+                ctx.error("Failed to execute %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
+                          cmd=cmd, stdout=ret[0], stderr=ret[1], retcode=ret[2])
                 raise Exception("Failed to execute command: %s" % ret[1])
             return True
 
         return False
 
-    def do_reload(self, resource):
+    def do_reload(self, ctx, resource):
         """
             Reload this resource
         """
         if resource.reload:
-            return self.do_cmd(resource, resource.reload)
+            return self.do_cmd(ctx, resource, resource.reload)
 
-        return self.do_cmd(resource, resource.command)
+        return self.do_cmd(ctx, resource, resource.command)
 
-    def do_changes(self, resource):
+    def do_changes(self, ctx, resource, changes):
         if resource.reload_only:
             # TODO It is only reload
             return False
 
-        return self.do_cmd(resource, resource.command)
+        return self.do_cmd(ctx, resource, resource.command)
