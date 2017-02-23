@@ -18,6 +18,7 @@
 import inmanta
 import os
 
+
 # TODO: check reported changes
 def test_exec(project, tmpdir):
     test_path_1 = str(tmpdir.join("file1"))
@@ -44,7 +45,7 @@ import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="/usr/bin/touch %(f2)s", creates="%(f1)s")
-        """ % {"f1":test_path_1, "f2": test_path_2})
+        """ % {"f1": test_path_1, "f2": test_path_2})
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
