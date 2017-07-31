@@ -42,9 +42,11 @@ class PosixRun(handler.ResourceHandler):
     def available(self, resource):
         return self._io.file_exists("/bin/true")
 
-    def _execute(self, command, timeout, cwd=None):
+    def _execute(self, command, timeout, cwd=None, env={}):
         args = shlex.split(command)
-        return self._io.run(args[0], args[1:], None, cwd, timeout=timeout)
+        if env is None or len(env)==0:
+            env = None
+        return self._io.run(args[0], args[1:], env, cwd, timeout=timeout)
 
     def check_resource(self, ctx, resource):
         return resource
@@ -59,7 +61,7 @@ class PosixRun(handler.ResourceHandler):
 
         if resource.unless is not None and resource.unless != "":
             # only execute this Run if this command fails
-            value = self._execute(resource.unless, resource.timeout)
+            value = self._execute(resource.unless, resource.timeout, env=resource.environment)
             ctx.info("Unless cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
                      cmd=resource.unless, stdout=value[0], stderr=value[1], retcode=value[2])
 
@@ -67,7 +69,7 @@ class PosixRun(handler.ResourceHandler):
 
         if resource.onlyif is not None and resource.onlyif != "":
             # only execute this Run if this command is succesfull
-            value = self._execute(resource.onlyif, resource.timeout)
+            value = self._execute(resource.onlyif, resource.timeout, env=resource.environment)
             ctx.info("Onlyif cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
                      cmd=resource.onlyif, stdout=value[0], stderr=value[1], retcode=value[2])
 
@@ -91,13 +93,16 @@ class PosixRun(handler.ResourceHandler):
             cwd = None
             if resource.cwd != '':
                 cwd = resource.cwd
-            ctx.debug("Execute %(cmd)s with timeout %(timeout)s and working dir %(cwd)s",
-                      cmd=cmd, timeout=resource.timeout, cwd=cwd)
-            ret = self._execute(cmd, resource.timeout, cwd=cwd)
+            ctx.debug("Execute %(cmd)s with timeout %(timeout)s and working dir %(cwd)s and env %(env)s",
+                      cmd=cmd, timeout=resource.timeout, cwd=cwd, env=resource.environment)
+            ret = self._execute(cmd, resource.timeout, cwd=cwd, env=resource.environment)
             if ret[2] not in resource.returns:
                 ctx.error("Failed to execute %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
                           cmd=cmd, stdout=ret[0], stderr=ret[1], retcode=ret[2])
                 raise Exception("Failed to execute command: %s" % ret[1])
+            else:
+                ctx.info("Executed %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
+                          cmd=cmd, stdout=ret[0], stderr=ret[1], retcode=ret[2])
             return True
 
         return False

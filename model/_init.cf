@@ -41,7 +41,7 @@ entity Run:
     string command
     string creates=""
     string cwd=""
-    string environment=""
+    dict environment={}
     string onlyif=""
     string path=""
     string reload=""
