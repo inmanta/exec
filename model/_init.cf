@@ -51,9 +51,13 @@ entity Run:
     string unless=""
 end
 
-implement Run using std::none
+implement Run using execHost
 
 std::Host host [1] -- [0:] Run exec_run_commands
 
 # Force the command, combined with the host to make a Run unique
 index Run(host, command)
+
+implementation execHost for Run:
+    self.requires = self.host.requires
+end
