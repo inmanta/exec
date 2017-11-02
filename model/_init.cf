@@ -16,7 +16,7 @@
     Contact: code@inmanta.com
 """
 
-entity Run:
+entity Run extends std::Resource:
     """
         Run a command with almost exact semantics as the exec type of puppet
 
