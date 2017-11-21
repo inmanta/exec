@@ -20,23 +20,24 @@ entity Run extends std::Resource:
     """
         Run a command with almost exact semantics as the exec type of puppet
 
-        :param command The actual command to execute. The command should be almost always be idempotent.
-        :param creates A file that the command creates, when the file already exists the command will not be executed. This
+        :param command: The actual command to execute. The command should be almost always be idempotent.
+        :param creates: A file that the command creates, when the file already exists the command will not be executed. This
                        helps to make simple commands idempotent
-        :param cwd The directory from which to run the command. WARNING: Command is spawned in a subshell. This implies that
+        :param cwd: The directory from which to run the command. WARNING: Command is spawned in a subshell. This implies that
                    the real path of cwd is used and not a possible symlinked path.
-        :param environment Environment variables to set before the command is executed. An array of variables can be passed as
+        :param environment: Environment variables to set before the command is executed. An array of variables can be passed as
                            strings in the form var=value
-        :param onlyif Only execute the command if this command is true (returns 0)
-        :param path The path to search the command in
-        :param reload The command to execute when this run needs to reload. If empty the command itself will be executed again.
-        :param reload_only Only use this command to reload
-        :param returns A list of valid return codes, by default this is only 0
-        :param timeout The maximum time the command should take. If the command takes longer, the deploy agent will try to end
-                       it.
-        :param unless If this attribute is set, the command will only execute if the command in this attribute is not successful
-                      (returns not 0). If the command passed to this attribute does not exist, this is interpreted as a
-                      non-successful execution.
+        :param onlyif: Only execute the command if this command is true (returns 0)
+        :param path: The path to search the command in
+        :param reload: The command to execute when this run needs to reload. If empty the command itself will be executed again.
+        :param reload_only: Only use this command to reload
+        :param returns: A list of valid return codes, by default this is only 0
+        :param timeout: The maximum time the command should take. If the command takes longer, the deploy agent will try to end
+                        it.
+        :param unless: If this attribute is set, the command will only execute if the command in this attribute is not successful
+                       (returns not 0). If the command passed to this attribute does not exist, this is interpreted as a
+                       non-successful execution.
+        :param skip_on_fail: Report this resource as skipped instead of failed.
     """
     string command
     string creates=""
@@ -49,6 +50,7 @@ entity Run extends std::Resource:
     number[] returns=[0]
     number timeout=300
     string unless=""
+    bool skip_on_fail=false
 end
 
 implement Run using execHost

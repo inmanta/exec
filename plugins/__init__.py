@@ -28,7 +28,7 @@ class Run(Resource):
         This class represents a service on a system.
     """
     fields = ("command", "creates", "cwd", "environment", "onlyif", "path", "reload", "reload_only", "returns", "timeout",
-              "unless")
+              "unless", "skip_on_fail")
 
 
 @handler.provider("exec::Run", name="posix")
@@ -99,7 +99,11 @@ class PosixRun(handler.ResourceHandler):
             if ret[2] not in resource.returns:
                 ctx.error("Failed to execute %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
                           cmd=cmd, stdout=ret[0], stderr=ret[1], retcode=ret[2])
-                raise Exception("Failed to execute command: %s" % ret[1])
+
+                if resource.skip_on_fail:
+                    raise handler.SkipException("Failed to execute command: %s" % ret[1])
+                else:
+                    raise Exception("Failed to execute command: %s" % ret[1])
             else:
                 ctx.info("Executed %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
                           cmd=cmd, stdout=ret[0], stderr=ret[1], retcode=ret[2])
