@@ -101,7 +101,7 @@ class PosixRun(handler.ResourceHandler):
                           cmd=cmd, stdout=ret[0], stderr=ret[1], retcode=ret[2])
 
                 if resource.skip_on_fail:
-                    raise handler.SkipException("Failed to execute command: %s" % ret[1])
+                    raise handler.SkipResource("Failed to execute command: %s" % ret[1])
                 else:
                     raise Exception("Failed to execute command: %s" % ret[1])
             else:
