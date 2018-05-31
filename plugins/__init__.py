@@ -1,5 +1,5 @@
 """
-    Copyright 2017 Inmanta
+    Copyright 2018 Inmanta
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,8 +18,12 @@
 
 from inmanta.resources import Resource, resource
 from inmanta.agent import handler
+from inmanta import const
 
 import shlex
+
+import requests
+from jq import jq
 
 
 @resource("exec::Run", agent="host.name", id_attribute="command")
@@ -27,8 +31,42 @@ class Run(Resource):
     """
         This class represents a service on a system.
     """
-    fields = ("command", "creates", "cwd", "environment", "onlyif", "path", "reload", "reload_only", "returns", "timeout",
-              "unless", "skip_on_fail")
+    fields = (
+        "command",
+        "creates",
+        "cwd",
+        "environment",
+        "onlyif",
+        "path",
+        "reload",
+        "reload_only",
+        "returns",
+        "timeout",
+        "unless",
+        "skip_on_fail",
+    )
+
+
+@resource("exec::RESTCall", agent="agent", id_attribute="url_id")
+class RESTCall(Resource):
+    """
+        A Call to a rest endpoint
+    """
+    fields = (
+        "url_id",
+        "url",
+        "method",
+        "body",
+        "headers",
+        "form_encoded",
+        "ssl_verify",
+        "auth_user",
+        "auth_password",
+        "return_codes",
+        "skip_on_fail",
+        "validate_return",
+        "agent",
+    )
 
 
 @handler.provider("exec::Run", name="posix")
@@ -39,12 +77,13 @@ class PosixRun(handler.ResourceHandler):
         method will determine based on the "reload_only", "creates", "unless"
         and "onlyif" attributes if the command will be executed.
     """
+
     def available(self, resource):
         return self._io.file_exists("/bin/true")
 
     def _execute(self, command, timeout, cwd=None, env={}):
         args = shlex.split(command)
-        if env is None or len(env)==0:
+        if env is None or len(env) == 0:
             env = None
         return self._io.run(args[0], args[1:], env, cwd, timeout=timeout)
 
@@ -62,16 +101,26 @@ class PosixRun(handler.ResourceHandler):
         if resource.unless is not None and resource.unless != "":
             # only execute this Run if this command fails
             value = self._execute(resource.unless, resource.timeout, env=resource.environment)
-            ctx.info("Unless cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
-                     cmd=resource.unless, stdout=value[0], stderr=value[1], retcode=value[2])
+            ctx.info(
+                "Unless cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
+                cmd=resource.unless,
+                stdout=value[0],
+                stderr=value[1],
+                retcode=value[2],
+            )
 
             execute &= value[2] != 0
 
         if resource.onlyif is not None and resource.onlyif != "":
             # only execute this Run if this command is succesfull
             value = self._execute(resource.onlyif, resource.timeout, env=resource.environment)
-            ctx.info("Onlyif cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
-                     cmd=resource.onlyif, stdout=value[0], stderr=value[1], retcode=value[2])
+            ctx.info(
+                "Onlyif cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
+                cmd=resource.onlyif,
+                stdout=value[0],
+                stderr=value[1],
+                retcode=value[2],
+            )
 
             execute &= value[2] == 0
 
@@ -91,22 +140,37 @@ class PosixRun(handler.ResourceHandler):
         if ctx.get("execute"):
             ctx.set_updated()
             cwd = None
-            if resource.cwd != '':
+            if resource.cwd != "":
                 cwd = resource.cwd
-            ctx.debug("Execute %(cmd)s with timeout %(timeout)s and working dir %(cwd)s and env %(env)s",
-                      cmd=cmd, timeout=resource.timeout, cwd=cwd, env=resource.environment)
+            ctx.debug(
+                "Execute %(cmd)s with timeout %(timeout)s and working dir %(cwd)s and env %(env)s",
+                cmd=cmd,
+                timeout=resource.timeout,
+                cwd=cwd,
+                env=resource.environment,
+            )
             ret = self._execute(cmd, resource.timeout, cwd=cwd, env=resource.environment)
             if ret[2] not in resource.returns:
-                ctx.error("Failed to execute %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
-                          cmd=cmd, stdout=ret[0], stderr=ret[1], retcode=ret[2])
+                ctx.error(
+                    "Failed to execute %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
+                    cmd=cmd,
+                    stdout=ret[0],
+                    stderr=ret[1],
+                    retcode=ret[2],
+                )
 
                 if resource.skip_on_fail:
                     raise handler.SkipResource("Failed to execute command: %s" % ret[1])
                 else:
                     raise Exception("Failed to execute command: %s" % ret[1])
             else:
-                ctx.info("Executed %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
-                          cmd=cmd, stdout=ret[0], stderr=ret[1], retcode=ret[2])
+                ctx.info(
+                    "Executed %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
+                    cmd=cmd,
+                    stdout=ret[0],
+                    stderr=ret[1],
+                    retcode=ret[2],
+                )
             return True
 
         return False
@@ -126,3 +190,48 @@ class PosixRun(handler.ResourceHandler):
             return False
 
         return self.do_cmd(ctx, resource, resource.command)
+
+
+@handler.provider("exec::RESTCall", name="requests")
+class RESTHandler(handler.ResourceHandler):
+    def list_changes(self, ctx: handler.HandlerContext, resource: RESTCall):
+        return {}
+
+    def do_changes(self, ctx: handler.HandlerContext, resource: RESTCall, changes: dict):
+        return self._call(ctx, resource)
+
+    def _fail(self, resource, message):
+        if resource.skip_on_fail:
+            raise handler.SkipResource(message)
+        raise Exception(message)
+
+    def _call(self, ctx: handler.HandlerContext, resource: RESTCall):
+        args = {
+            "method": resource.method.upper(),
+            "url": resource.url,
+            "headers": resource.headers,
+            "verify": resource.ssl_verify,
+            "auth": (resource.auth_user, resource.auth_password),
+        }
+
+        if resource.form_encoded:
+            args["data"] = resource.body
+        else:
+            args["json"] = resource.body
+
+        ctx.debug("Calling REST api", **args)
+        result = requests.request(**args)
+
+        json_data = result.json()
+        ctx.info("Call returned", status=result.status_code, json=json_data)
+        if result.status_code not in resource.return_codes:
+            self._fail(resource, "Invalid status code returned %s" % result.status_code)
+
+        if resource.validate_return is not None:
+            result = jq(resource.validate_return).transform(json_data)
+            ctx.debug("%(query)s validated to %(result)s", query=resource.validate_return, result=result)
+
+            if not result:
+                self._fail(resource, "Returned result not valid.")
+
+        return True

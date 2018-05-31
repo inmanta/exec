@@ -1,5 +1,5 @@
 """
-    Copyright 2017 Inmanta
+    Copyright 2018 Inmanta
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,24 +20,24 @@ entity Run extends std::Resource:
     """
         Run a command with almost exact semantics as the exec type of puppet
 
-        :param command: The actual command to execute. The command should be almost always be idempotent.
-        :param creates: A file that the command creates, when the file already exists the command will not be executed. This
+        :attr command: The actual command to execute. The command should be almost always be idempotent.
+        :attr creates: A file that the command creates, when the file already exists the command will not be executed. This
                        helps to make simple commands idempotent
-        :param cwd: The directory from which to run the command. WARNING: Command is spawned in a subshell. This implies that
+        :attr cwd: The directory from which to run the command. WARNING: Command is spawned in a subshell. This implies that
                    the real path of cwd is used and not a possible symlinked path.
-        :param environment: Environment variables to set before the command is executed. An array of variables can be passed as
+        :attr environment: Environment variables to set before the command is executed. An array of variables can be passed as
                            strings in the form var=value
-        :param onlyif: Only execute the command if this command is true (returns 0)
-        :param path: The path to search the command in
-        :param reload: The command to execute when this run needs to reload. If empty the command itself will be executed again.
-        :param reload_only: Only use this command to reload
-        :param returns: A list of valid return codes, by default this is only 0
-        :param timeout: The maximum time the command should take. If the command takes longer, the deploy agent will try to end
+        :attr onlyif: Only execute the command if this command is true (returns 0)
+        :attr path: The path to search the command in
+        :attr reload: The command to execute when this run needs to reload. If empty the command itself will be executed again.
+        :attr reload_only: Only use this command to reload
+        :attr returns: A list of valid return codes, by default this is only 0
+        :attr timeout: The maximum time the command should take. If the command takes longer, the deploy agent will try to end
                         it.
-        :param unless: If this attribute is set, the command will only execute if the command in this attribute is not successful
+        :attr unless: If this attribute is set, the command will only execute if the command in this attribute is not successful
                        (returns not 0). If the command passed to this attribute does not exist, this is interpreted as a
                        non-successful execution.
-        :param skip_on_fail: Report this resource as skipped instead of failed.
+        :attr skip_on_fail: Report this resource as skipped instead of failed.
     """
     string command
     string creates=""
@@ -53,13 +53,53 @@ entity Run extends std::Resource:
     bool skip_on_fail=false
 end
 
-implement Run using execHost
-
-std::Host host [1] -- [0:] Run exec_run_commands
+Run.host [1] -- std::Host
 
 # Force the command, combined with the host to make a Run unique
 index Run(host, command)
 
+entity RESTCall extends std::Resource:
+    """
+        This resource executes a restcall during the execute phase of the handler
+
+        :attr url: The url to call
+        :attr method: The HTTP method to use
+        :attr body: The body of the the http call. By default this body is sent as a json body
+        :attr headers: Additional headers to pass to the server.
+        :attr form_encoded: Use form encoding for the body
+        :attr ssl_verify: Verify the ssl cert of the server
+        :attr auth_user: The user to authenticate with
+        :attr auth_password: The password to authenticate with
+        :attr return_codes: Returns code that indicate that the call was successfull
+        :attr skip_on_fail: Report this resource as skipped instead of failed.
+        :attr validate_return: An JQ expression to validate the return result of the call. The result of this JQ expression
+                               evaluates to a python true or false.
+        :attr agent: The agent to initiate the REST call from
+    """
+    string url_id
+    string url
+    string method="GET"
+    dict body
+    dict headers={}
+    bool form_encoded=false
+    bool ssl_verify=true
+    string? auth_user=null
+    string? auth_password=null
+    number[] return_codes=[200]
+    string? validate_return=null
+    bool skip_on_fail=false
+    string agent="internal"
+end
+
+index RESTCall(agent, url, method)
+
 implementation execHost for Run:
     self.requires = self.host.requires
 end
+
+implementation restCallID for RESTCall:
+    self.url_id = "{{ method }}_{{ url }}"
+end
+
+implement Run using execHost
+implement RESTCall using restCallID
