@@ -58,48 +58,8 @@ Run.host [1] -- std::Host
 # Force the command, combined with the host to make a Run unique
 index Run(host, command)
 
-entity RESTCall extends std::Resource:
-    """
-        This resource executes a restcall during the execute phase of the handler
-
-        :attr url: The url to call
-        :attr method: The HTTP method to use
-        :attr body: The body of the the http call. By default this body is sent as a json body
-        :attr headers: Additional headers to pass to the server.
-        :attr form_encoded: Use form encoding for the body
-        :attr ssl_verify: Verify the ssl cert of the server
-        :attr auth_user: The user to authenticate with
-        :attr auth_password: The password to authenticate with
-        :attr return_codes: Returns code that indicate that the call was successfull
-        :attr skip_on_fail: Report this resource as skipped instead of failed.
-        :attr validate_return: An JQ expression to validate the return result of the call. The result of this JQ expression
-                               evaluates to a python true or false.
-        :attr agent: The agent to initiate the REST call from
-    """
-    string url_id
-    string url
-    string method="GET"
-    dict body
-    dict headers={}
-    bool form_encoded=false
-    bool ssl_verify=true
-    string? auth_user=null
-    string? auth_password=null
-    number[] return_codes=[200]
-    string? validate_return=null
-    bool skip_on_fail=false
-    string agent="internal"
-end
-
-index RESTCall(agent, url, method)
-
 implementation execHost for Run:
     self.requires = self.host.requires
 end
 
-implementation restCallID for RESTCall:
-    self.url_id = "{{ method }}_{{ url }}"
-end
-
 implement Run using execHost
-implement RESTCall using restCallID
