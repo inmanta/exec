@@ -25,8 +25,8 @@ entity Run extends std::Resource:
                        helps to make simple commands idempotent
         :attr cwd: The directory from which to run the command. WARNING: Command is spawned in a subshell. This implies that
                    the real path of cwd is used and not a possible symlinked path.
-        :attr environment: Environment variables to set before the command is executed. An array of variables can be passed as
-                           strings in the form var=value
+        :attr environment: Environment variables to set before the command is executed. A dictionary of variables can be passed
+                           in the form {"var": "value"}.  
         :attr onlyif: Only execute the command if this command is true (returns 0)
         :attr path: The path to search the command in
         :attr reload: The command to execute when this run needs to reload. If empty the command itself will be executed again.
