@@ -151,3 +151,58 @@ exec::Run(host=host, command="sleep 0.1", timeout=0.01)
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
     assert ctx.status == inmanta.const.ResourceState.failed
+
+
+def test_4_java_home(project, tmpdir):
+    test_path_1 = str(tmpdir.join("output"))
+    assert os.path.exists(str(tmpdir))
+    print(test_path_1)
+
+    project.compile("""
+import unittest
+import exec
+
+environment_vars = {"JAVA_HOME": "/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin"}
+
+host = std::Host(name="server", os=std::linux)
+exec::Run(host=host, command="sh -c 'env >%(f)s 2>&1'", environment=environment_vars)
+        """ % {"f": test_path_1})
+
+    assert not os.path.exists(test_path_1)
+
+    e = project.get_resource("exec::Run")
+    ctx = project.deploy(e)
+    assert ctx.status == inmanta.const.ResourceState.deployed
+    assert os.path.exists(test_path_1)
+    with open(test_path_1, "r") as fh:
+        assert "/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin" in fh.read()
+
+def test_4_java_home_3(project, tmpdir):
+    test_path_1 = str(tmpdir.join("output"))
+    assert os.path.exists(str(tmpdir))
+    print(test_path_1)
+
+    project.compile("""
+import unittest
+import exec
+
+environment_vars = {
+   "JAVA_HOME" : "/usr/lib/jvm/jre-1.7.0-openjdk/",
+   "JAVA_TOOL_OPTIONS" : "-Dfile.encoding=UTF8 >> /home/inmanta/install.log"
+}
+
+host = std::Host(name="server", os=std::linux)
+exec::Run(host=host, command="sh -c 'export PATH=$PATH:/usr/lib/jvm/jre-1.7.0-openjdk/bin; env >%(f)s 2>&1'", environment=environment_vars)
+        """ % {"f": test_path_1})
+
+    assert not os.path.exists(test_path_1)
+
+    e = project.get_resource("exec::Run")
+    ctx = project.deploy(e)
+    assert ctx.status == inmanta.const.ResourceState.deployed
+    assert os.path.exists(test_path_1)
+    with open(test_path_1, "r") as fh:
+        content = fh.read()
+        assert "/usr/lib/jvm/jre-1.7.0-openjdk/" in content
+        assert "-Dfile.encoding=UTF8 >> /home/inmanta/install.log" in content
+        print(content)
