@@ -26,7 +26,7 @@ from inmanta.resources import Resource, resource
 
 
 @plugin
-def in_shell(command:str):
+def in_shell(command: "string"):
     return subprocess.list2cmdline(["sh","-c", command])
     
 
