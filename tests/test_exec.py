@@ -154,7 +154,7 @@ exec::Run(host=host, command="sleep 0.1", timeout=0.01)
 
 
 def test_4_java_home(project, tmpdir):
-    test_path_1 = str(tmpdir.join("output"))
+    test_path_1 = str(tmpdir.join("outqput"))
     assert os.path.exists(str(tmpdir))
     print(test_path_1)
 

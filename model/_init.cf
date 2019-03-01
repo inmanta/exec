@@ -20,6 +20,24 @@ entity Run extends std::Resource:
     """
         Run a command with almost exact semantics as the exec type of puppet
 
+        *The command is not executed in a shell!* This means:
+        
+        * shell operators like `;`, `|`, `>` don't work
+        * variable substitution doesn't work: `echo $PATH` will literally print `$PATH`
+        * variable substitution doesn't work in environment variables either: setting `PATH` to `$PATH` will result in `command not found`
+
+        If want a shell, use the plugin 'in_shell':
+
+        .. code:: inmanta
+            
+            exec::Run(hosts=hosts, command=exec::in_shell(command))
+
+        If you want variable substitution on environment variables, use the export command:
+
+        .. code:: inmanta
+            
+            exec::Run(hosts=hosts, command=exec::in_shell("export PATH=$PATH:/usr/local/bin; {{command}}"))
+
         :attr command: The actual command to execute. The command should be almost always be idempotent.
         :attr creates: A file that the command creates, when the file already exists the command will not be executed. This
                        helps to make simple commands idempotent
