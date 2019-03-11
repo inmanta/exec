@@ -16,12 +16,20 @@
     Contact: code@inmanta.com
 """
 
-from inmanta.resources import Resource, resource
-from inmanta.agent import handler
-from inmanta import const
-
 import shlex
+import subprocess
 
+from inmanta import const
+from inmanta.agent import handler
+from inmanta.plugins import plugin
+from inmanta.resources import Resource, resource
+
+
+@plugin
+def in_shell(command: "string"):
+    """ Wrap the command such that it is executed in a shell """
+    return subprocess.list2cmdline(["sh","-c", command])
+    
 
 @resource("exec::Run", agent="host.name", id_attribute="command")
 class Run(Resource):
