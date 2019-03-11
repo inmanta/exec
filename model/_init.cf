@@ -30,13 +30,13 @@ entity Run extends std::Resource:
 
         .. code:: inmanta
             
-            exec::Run(hosts=hosts, command=exec::in_shell(command))
+            exec::Run(host=host, command=exec::in_shell(command))
 
         If you want variable substitution on environment variables, use the export command:
 
         .. code:: inmanta
             
-            exec::Run(hosts=hosts, command=exec::in_shell("export PATH=$PATH:/usr/local/bin; {{command}}"))
+            exec::Run(host=host, command=exec::in_shell("export PATH=$PATH:/usr/local/bin; {{command}}"))
 
         :attr command: The actual command to execute. The command should be almost always be idempotent.
         :attr creates: A file that the command creates, when the file already exists the command will not be executed. This

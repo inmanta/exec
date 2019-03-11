@@ -206,3 +206,29 @@ exec::Run(host=host, command="sh -c 'export PATH=$PATH:/usr/lib/jvm/jre-1.7.0-op
         assert "/usr/lib/jvm/jre-1.7.0-openjdk/" in content
         assert "-Dfile.encoding=UTF8 >> /home/inmanta/install.log" in content
         print(content)
+
+
+def test_in_shell(project, tmpdir):
+    test_path_1 = str(tmpdir.join("output"))
+    assert os.path.exists(str(tmpdir))
+    print(test_path_1)
+
+    project.compile("""
+import unittest
+import exec
+
+host = std::Host(name="server", os=std::linux)
+exec::Run(host=host, command=exec::in_shell("export PATH=$PATH:/floem; env>%(f)s"))
+        """ % {"f": test_path_1})
+
+    assert not os.path.exists(test_path_1)
+
+    e = project.get_resource("exec::Run")
+    ctx = project.deploy(e)
+    assert ctx.status == inmanta.const.ResourceState.deployed
+    assert os.path.exists(test_path_1)
+    with open(test_path_1, "r") as fh:
+        content = fh.read()
+        assert "/floem" in content
+        print(content)
+
