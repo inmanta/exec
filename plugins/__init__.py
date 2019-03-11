@@ -27,6 +27,7 @@ from inmanta.resources import Resource, resource
 
 @plugin
 def in_shell(command: "string"):
+    """ Warp the command such that it is executed in a shell """
     return subprocess.list2cmdline(["sh","-c", command])
     
 
