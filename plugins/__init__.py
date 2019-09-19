@@ -29,7 +29,7 @@ from inmanta.resources import Resource, resource
 def in_shell(command: "string"):
     """ Wrap the command such that it is executed in a shell """
     return subprocess.list2cmdline(["sh","-c", command])
-    
+
 
 @resource("exec::Run", agent="host.name", id_attribute="command")
 class Run(Resource):
@@ -121,7 +121,6 @@ class PosixRun(handler.ResourceHandler):
             Execute the command (or reload command) if required
         """
         if ctx.get("execute"):
-            ctx.set_updated()
             cwd = None
             if resource.cwd != "":
                 cwd = resource.cwd
@@ -172,4 +171,5 @@ class PosixRun(handler.ResourceHandler):
             # TODO It is only reload
             return False
 
-        return self.do_cmd(ctx, resource, resource.command)
+        if self.do_cmd(ctx, resource, resource.command):
+            ctx.set_updated()
