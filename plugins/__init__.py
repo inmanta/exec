@@ -169,7 +169,7 @@ class PosixRun(handler.ResourceHandler):
     def do_changes(self, ctx, resource, changes):
         if resource.reload_only:
             # TODO It is only reload
-            return False
+            return
 
         if self.do_cmd(ctx, resource, resource.command):
             ctx.set_updated()
