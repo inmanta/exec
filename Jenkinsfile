@@ -14,7 +14,6 @@ pipeline {
         script{
           sh'''
           python3 -m venv ${WORKSPACE}/env
-          ${WORKSPACE}/env/bin/pip uninstall -y pytest-inmanta
           ${WORKSPACE}/env/bin/pip install -r requirements.dev.txt
           # make sure pytest inmanta is the required version
           ${WORKSPACE}/env/bin/pip install pytest-inmanta -i pypi_index
@@ -39,6 +38,15 @@ pipeline {
           '''
           junit 'junit.xml'
         }
+      }
+    }
+  }
+  post{
+    always{
+      script{
+        sh'''
+        ${WORKSPACE}/env/bin/pip uninstall -y pytest-inmanta
+        '''
       }
     }
   }
