@@ -1,37 +1,42 @@
 pipeline {
   agent any
-  triggers {
+  triggers{
     pollSCM '* * * * *'
-    cron '@midnight'
+    cron(BRANCH_NAME == "master" ? "H H(2-5) * * *": "")
   }
-  options { 
-    disableConcurrentBuilds() 
-    checkoutToSubdirectory('exec')
+  options { disableConcurrentBuilds() }
+  parameters {
+    string(name: 'pypi_index', defaultValue: 'https://artifacts.internal.inmanta.com/inmanta/stable', description: 'Changes the index used to install pytest-inmanta (And only pytest-inmanta)')
   }
-
-  environment {
-      INMANTA_MODULE_REPO='https://github.com/inmanta/'
-      INMANTA_TEST_ENV="${env.WORKSPACE}/env"
-  } 
-
   stages {
-    stage("test"){
+    stage("setup"){
       steps{
         script{
-          sh 'rm -rf $INMANTA_TEST_ENV; python3 -m venv $INMANTA_TEST_ENV; $INMANTA_TEST_ENV/bin/python3 -m pip install -U  git+https://github.com/inmanta/inmanta.git git+https://github.com/inmanta/pytest-inmanta.git'
-          dir('exec'){
-            sh '$INMANTA_TEST_ENV/bin/python3 -m pytest --junitxml=junit.xml -vvv tests'
-          }
+          sh'''
+          python3 -m venv ${WORKSPACE}/env
+          ${WORKSPACE}/env/bin/pip install -r requirements.dev.txt
+          '''
+        }
+      }
+    }
+    stage("code linting"){
+      steps{
+        script{
+          sh'''
+          ${WORKSPACE}/env/bin/flake8 plugins tests
+          '''
+        }
+      }
+    }
+    stage("tests"){
+      steps{
+        script{
+          sh'''
+          ${WORKSPACE}/env/bin/pytest tests -v --junitxml=junit.xml
+          '''
+          junit 'junit.xml'
         }
       }
     }
   }
-  post {
-    always{
-      always {
-            junit 'exec/junit.xml'
-        }
-    }
-  }
-
 }
