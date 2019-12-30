@@ -17,9 +17,9 @@ pipeline {
           ${WORKSPACE}/env/bin/pip install -r requirements.dev.txt
           # make sure pytest inmanta is the required version
           '''
-        }
-        if (pytest_inmanta_dev) {
-          sh"""${WORKSPACE}/env/bin/pip install --pre -U pytest-inmanta -i https://artifacts.internal.inmanta.com/inmanta/dev"""
+          if (pytest_inmanta_dev) {
+            sh"""${WORKSPACE}/env/bin/pip install --pre -U pytest-inmanta -i https://artifacts.internal.inmanta.com/inmanta/dev"""
+          }
         }
       }
     }
