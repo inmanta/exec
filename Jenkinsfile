@@ -6,7 +6,7 @@ pipeline {
   }
   options { disableConcurrentBuilds() }
   parameters {
-    booleanparam(name:"pytest_inmanta_dev" ,defaultValue: false, description: 'Changes the index used to install pytest-inmanta to the inmanta dev index')
+    booleanParam(name:"pytest_inmanta_dev" ,defaultValue: false, description: 'Changes the index used to install pytest-inmanta to the inmanta dev index')
   }
   stages {
     stage("setup"){
