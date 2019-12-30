@@ -15,8 +15,9 @@
 
     Contact: code@inmanta.com
 """
-import inmanta
 import os
+
+import inmanta
 
 
 # TODO: check reported changes
@@ -24,13 +25,16 @@ def test_exec(project, tmpdir):
     test_path_1 = str(tmpdir.join("file1"))
     test_path_2 = str(tmpdir.join("file2"))
 
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="/usr/bin/touch %(f)s")
-        """ % {"f": test_path_1})
+        """
+        % {"f": test_path_1}
+    )
 
     assert not os.path.exists(test_path_1)
 
@@ -40,13 +44,16 @@ exec::Run(host=host, command="/usr/bin/touch %(f)s")
     assert ctx.change == inmanta.const.Change.updated
     assert os.path.exists(test_path_1)
 
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="/usr/bin/touch %(f2)s", creates="%(f1)s")
-        """ % {"f1": test_path_1, "f2": test_path_2})
+        """
+        % {"f1": test_path_1, "f2": test_path_2}
+    )
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
@@ -57,13 +64,16 @@ exec::Run(host=host, command="/usr/bin/touch %(f2)s", creates="%(f1)s")
 
 
 def test_cwd(project, tmpdir):
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s")
-        """ % {"f": str(tmpdir)})
+        """
+        % {"f": str(tmpdir)}
+    )
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
@@ -73,13 +83,15 @@ exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s")
 
 
 def test_return_codes(project):
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="python -c 'import sys; sys.exit(3)'", returns=[0, 3, 5])
-        """)
+        """
+    )
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
@@ -88,13 +100,16 @@ exec::Run(host=host, command="python -c 'import sys; sys.exit(3)'", returns=[0, 
 
 
 def test_onlyif(project, tmpdir):
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s", onlyif="python -c 'import sys; sys.exit(1)'")
-        """ % {"f": str(tmpdir)})
+        """
+        % {"f": str(tmpdir)}
+    )
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
@@ -102,13 +117,16 @@ exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s", onlyif="python 
     assert ctx.change == inmanta.const.Change.nochange
     assert not tmpdir.join("test").exists()
 
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s", onlyif="python -c 'import sys; sys.exit(0)'")
-        """ % {"f": str(tmpdir)})
+        """
+        % {"f": str(tmpdir)}
+    )
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
@@ -118,13 +136,16 @@ exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s", onlyif="python 
 
 
 def test_unless(project, tmpdir):
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s", unless="python -c 'import sys; sys.exit(0)'")
-        """ % {"f": str(tmpdir)})
+        """
+        % {"f": str(tmpdir)}
+    )
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
@@ -132,13 +153,16 @@ exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s", unless="python 
     assert ctx.change == inmanta.const.Change.nochange
     assert not tmpdir.join("test").exists()
 
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s", unless="python -c 'import sys; sys.exit(1)'")
-        """ % {"f": str(tmpdir)})
+        """
+        % {"f": str(tmpdir)}
+    )
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
@@ -148,13 +172,15 @@ exec::Run(host=host, command="/usr/bin/touch test", cwd="%(f)s", unless="python 
 
 
 def test_timeout(project, tmpdir):
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="sleep 0.1", timeout=0.01)
-        """)
+        """
+    )
 
     e = project.get_resource("exec::Run")
     ctx = project.deploy(e)
@@ -167,7 +193,8 @@ def test_4_java_home(project, tmpdir):
     assert os.path.exists(str(tmpdir))
     print(test_path_1)
 
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
@@ -175,7 +202,9 @@ environment_vars = {"JAVA_HOME": "/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/s
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command="sh -c 'env >%(f)s 2>&1'", environment=environment_vars)
-        """ % {"f": test_path_1})
+        """
+        % {"f": test_path_1}
+    )
 
     assert not os.path.exists(test_path_1)
 
@@ -185,25 +214,33 @@ exec::Run(host=host, command="sh -c 'env >%(f)s 2>&1'", environment=environment_
     assert ctx.change == inmanta.const.Change.updated
     assert os.path.exists(test_path_1)
     with open(test_path_1, "r") as fh:
-        assert "/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin" in fh.read()
+        assert (
+            "/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin" in fh.read()
+        )
+
 
 def test_4_java_home_3(project, tmpdir):
     test_path_1 = str(tmpdir.join("output"))
     assert os.path.exists(str(tmpdir))
     print(test_path_1)
 
-    project.compile("""
-import unittest
-import exec
+    project.compile(
+        """
+        import unittest
+        import exec
 
-environment_vars = {
-   "JAVA_HOME" : "/usr/lib/jvm/jre-1.7.0-openjdk/",
-   "JAVA_TOOL_OPTIONS" : "-Dfile.encoding=UTF8 >> /home/inmanta/install.log"
-}
+        environment_vars = {
+        "JAVA_HOME" : "/usr/lib/jvm/jre-1.7.0-openjdk/",
+        "JAVA_TOOL_OPTIONS" : "-Dfile.encoding=UTF8 >> /home/inmanta/install.log"
+        }
 
-host = std::Host(name="server", os=std::linux)
-exec::Run(host=host, command="sh -c 'export PATH=$PATH:/usr/lib/jvm/jre-1.7.0-openjdk/bin; env >%(f)s 2>&1'", environment=environment_vars)
-        """ % {"f": test_path_1})
+        host = std::Host(name="server", os=std::linux)
+        exec::Run(
+        host=host,
+        command="sh -c 'export PATH=$PATH:/usr/lib/jvm/jre-1.7.0-openjdk/bin; env >%(f)s 2>&1'", environment=environment_vars)
+        """
+        % {"f": test_path_1}
+    )
 
     assert not os.path.exists(test_path_1)
 
@@ -224,13 +261,16 @@ def test_in_shell(project, tmpdir):
     assert os.path.exists(str(tmpdir))
     print(test_path_1)
 
-    project.compile("""
+    project.compile(
+        """
 import unittest
 import exec
 
 host = std::Host(name="server", os=std::linux)
 exec::Run(host=host, command=exec::in_shell("export PATH=$PATH:/floem; env>%(f)s"))
-        """ % {"f": test_path_1})
+        """
+        % {"f": test_path_1}
+    )
 
     assert not os.path.exists(test_path_1)
 

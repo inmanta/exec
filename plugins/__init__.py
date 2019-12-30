@@ -19,7 +19,6 @@
 import shlex
 import subprocess
 
-from inmanta import const
 from inmanta.agent import handler
 from inmanta.plugins import plugin
 from inmanta.resources import Resource, resource
@@ -28,7 +27,7 @@ from inmanta.resources import Resource, resource
 @plugin
 def in_shell(command: "string"):
     """ Wrap the command such that it is executed in a shell """
-    return subprocess.list2cmdline(["sh","-c", command])
+    return subprocess.list2cmdline(["sh", "-c", command])
 
 
 @resource("exec::Run", agent="host.name", id_attribute="command")
@@ -36,6 +35,7 @@ class Run(Resource):
     """
         This class represents a service on a system.
     """
+
     fields = (
         "command",
         "creates",
@@ -83,7 +83,9 @@ class PosixRun(handler.ResourceHandler):
 
         if resource.unless is not None and resource.unless != "":
             # only execute this Run if this command fails
-            value = self._execute(resource.unless, resource.timeout, env=resource.environment)
+            value = self._execute(
+                resource.unless, resource.timeout, env=resource.environment
+            )
             ctx.info(
                 "Unless cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
                 cmd=resource.unless,
@@ -96,7 +98,9 @@ class PosixRun(handler.ResourceHandler):
 
         if resource.onlyif is not None and resource.onlyif != "":
             # only execute this Run if this command is succesfull
-            value = self._execute(resource.onlyif, resource.timeout, env=resource.environment)
+            value = self._execute(
+                resource.onlyif, resource.timeout, env=resource.environment
+            )
             ctx.info(
                 "Onlyif cmd %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s",
                 cmd=resource.onlyif,
@@ -131,7 +135,9 @@ class PosixRun(handler.ResourceHandler):
                 cwd=cwd,
                 env=resource.environment,
             )
-            ret = self._execute(cmd, resource.timeout, cwd=cwd, env=resource.environment)
+            ret = self._execute(
+                cmd, resource.timeout, cwd=cwd, env=resource.environment
+            )
             if ret[2] not in resource.returns:
                 ctx.error(
                     "Failed to execute %(cmd)s: out: '%(stdout)s', err: '%(stderr)s', returncode: %(retcode)s ",
