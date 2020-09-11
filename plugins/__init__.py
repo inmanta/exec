@@ -33,7 +33,7 @@ def in_shell(command: "string"):
 @resource("exec::Run", agent="host.name", id_attribute="command")
 class Run(Resource):
     """
-        This class represents a service on a system.
+    This class represents a service on a system.
     """
 
     fields = (
@@ -55,10 +55,10 @@ class Run(Resource):
 @handler.provider("exec::Run", name="posix")
 class PosixRun(handler.ResourceHandler):
     """
-        A handler to execute commands on posix compatible systems. This is
-        a very atypical resource as this executes a command. The check_resource
-        method will determine based on the "reload_only", "creates", "unless"
-        and "onlyif" attributes if the command will be executed.
+    A handler to execute commands on posix compatible systems. This is
+    a very atypical resource as this executes a command. The check_resource
+    method will determine based on the "reload_only", "creates", "unless"
+    and "onlyif" attributes if the command will be executed.
     """
 
     def available(self, resource):
@@ -116,13 +116,13 @@ class PosixRun(handler.ResourceHandler):
 
     def can_reload(self):
         """
-            Can this handler reload?
+        Can this handler reload?
         """
         return True
 
     def do_cmd(self, ctx, resource, cmd):
         """
-            Execute the command (or reload command) if required
+        Execute the command (or reload command) if required
         """
         if ctx.get("execute"):
             cwd = None
@@ -165,7 +165,7 @@ class PosixRun(handler.ResourceHandler):
 
     def do_reload(self, ctx, resource):
         """
-            Reload this resource
+        Reload this resource
         """
         if resource.reload:
             return self.do_cmd(ctx, resource, resource.reload)
