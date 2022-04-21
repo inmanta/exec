@@ -1,3 +1,6 @@
+# v 1.1.9
+- Add pytest.ini file and set asyncio_mode to auto
+
 # v 1.1.4
 - Update inmanta-dev-dependencies package
 
