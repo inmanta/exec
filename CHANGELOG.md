@@ -1,3 +1,6 @@
+# v 1.1.10
+- Remove pytest.ini and move its content to pyproject.toml
+
 # v 1.1.9
 - Add pytest.ini file and set asyncio_mode to auto
 
